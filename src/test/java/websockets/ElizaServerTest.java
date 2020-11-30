@@ -20,11 +20,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
 import static java.lang.String.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class ElizaServerTest {
 
     private static final Logger LOGGER = Grizzly.logger(ElizaServerTest.class);
+    private static final String RESPONSE_DOCTOR = "What's on your mind?";
 
 	private Server server;
 
@@ -56,14 +57,23 @@ public class ElizaServerTest {
 	}
 
 	@Test(timeout = 1000)
-	@Ignore
 	public void onChat() throws DeploymentException, IOException, URISyntaxException, InterruptedException {
-		// COMPLETE ME!!
 		List<String> list = new ArrayList<>();
 		ClientEndpointConfig configuration = ClientEndpointConfig.Builder.create().build();
 		ClientManager client = ClientManager.createClient();
-		client.connectToServer(new ElizaEndpointToComplete(list), configuration, new URI("ws://localhost:8025/websockets/eliza"));
-		// COMPLETE ME!!
+		//Get the session for send the messages
+		Session session = client.connectToServer(new ElizaEndpointToComplete(list), configuration, new URI("ws://localhost:8025/websockets/eliza"));
+		// Check that list hasn't a message
+        assertTrue(list.isEmpty());
+        //Send a message to web socket server
+        session.getAsyncRemote().sendText("Hi, Doctor. Can you help me?");
+
+        //Wait to receive a response from the DOCTOR
+        Thread.sleep(50);
+        // Check that the client receive the DOCTOR response
+        assertFalse(list.isEmpty());
+        // Check that the DOCTOR send a question about mental health
+        assertEquals(RESPONSE_DOCTOR, list.get(1));
 	}
 
 	@After
@@ -100,8 +110,6 @@ public class ElizaServerTest {
         @Override
         public void onOpen(Session session, EndpointConfig config) {
 
-            // COMPLETE ME!!!
-
             session.addMessageHandler(new ElizaMessageHandlerToComplete());
         }
 
@@ -110,7 +118,6 @@ public class ElizaServerTest {
             @Override
             public void onMessage(String message) {
                 list.add(message);
-                // COMPLETE ME!!!
             }
         }
     }
